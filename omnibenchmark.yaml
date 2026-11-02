@@ -1,5 +1,6 @@
 entrypoints:
   demultiplex: demultiplex.py
+  concatenate: concatenate.py
 
 # Pointed to shared CLI helper code
 templates:
