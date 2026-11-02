@@ -1,0 +1,8 @@
+{
+  "stage": "demultiplexing",
+  "version": "0.1.0",
+  "benchmark": "omni-scrna/ambient-plan",
+  "args": [
+    { "flag": "--filtered_h5ad", "type": "path", "help": "Ambient-corrected h5ad count matrix (called cells only)" }
+  ]
+}

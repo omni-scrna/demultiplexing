@@ -1,0 +1,14 @@
+entrypoints:
+  demultiplex: demultiplex.py
+
+# Pointed to shared CLI helper code
+templates:
+  repo: https://github.com/omni-scrna/boilerplate
+  ref: main
+  lang: python
+
+benchmarks:
+  - name: ambient-plan
+    repo: https://github.com/omni-scrna/ambient-plan
+    plan: benchmark_conda.yaml
+    ref: main
