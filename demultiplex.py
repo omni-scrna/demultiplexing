@@ -21,14 +21,21 @@ from common import cli  # noqa: E402
 
 def parse_args():
   import argparse
-  p = argparse.ArgumentParser(description="Species demultiplexing module (mixed_species)")
+  # allow_abbrev=False: otherwise argparse treats the unrecognized `--output`
+  # (api_version >= 0.8.0's named-outputs flag) as an abbreviation of the
+  # declared `--output_dir` and silently overwrites it.
+  p = argparse.ArgumentParser(description="Species demultiplexing module (mixed_species)",
+                               allow_abbrev=False)
   cli.add_base_args(p)                   # --output_dir, --name
   cli.add_stage_args(p, "demultiplexing")  # --filtered_h5ad
   p.add_argument(
     "--quantile", type=float, default=5,
     help="Percentile of majority_ratio below which cells are called ambiguous (default: 5)",
   )
-  return p.parse_args()
+  # EXPERIMENTAL (api_version >= 0.8.0): the engine also passes
+  # `--output <id>=<path>` unconditionally; parse_known_args() tolerates it
+  # rather than erroring on an unrecognized flag.
+  return p.parse_known_args()[0]
 
 
 def assign_species(adata, quantile=5):

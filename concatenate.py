@@ -1,12 +1,6 @@
 #!/usr/bin/env python3
-"""Gather module: concatenate per-pool cleaned matrices into one h5ad per
-logical dataset, joining each cell's species label from demultiplexing.
-
-Receives every pool's `filtered_h5ad` and `demultiplexed_tsv` for this
-dataset (via omnibenchmark's `gather`/`group_by`) as two separate lists --
-not necessarily in corresponding order, per the gather contract -- so pools
-are matched up by concatenating each side independently and joining on
-(pool_id, cell_id) rather than by pairing list positions.
+"""Gather module: concatenate per-pool cleaned matrices into h5ad per
+dataset, joining each cell's species label from demultiplexing.
 """
 
 import sys
@@ -22,7 +16,11 @@ from common import cli  # noqa: E402
 
 def parse_args():
   import argparse
-  p = argparse.ArgumentParser(description="Concatenate pools, join species labels (gather module)")
+  # allow_abbrev=False: otherwise argparse treats the unrecognized `--output`
+  # (api_version >= 0.8.0's named-outputs flag) as an abbreviation of the
+  # declared `--output_dir` and silently overwrites it.
+  p = argparse.ArgumentParser(description="Concatenate pools, join species labels (gather module)",
+                               allow_abbrev=False)
   cli.add_base_args(p)  # --output_dir, --name
   # Gather flags: one value per upstream producer, not a single path -- the
   # shared schema helper doesn't support nargs, so these are hand-written.
@@ -30,7 +28,10 @@ def parse_args():
                   help="Cleaned h5ad, one per pool")
   p.add_argument("--demultiplexed_tsv", nargs="+", required=True,
                   help="Species assignment TSV (pool_id, cell_id, species, majority_ratio), one per pool")
-  return p.parse_args()
+  # EXPERIMENTAL (api_version >= 0.8.0): the engine also passes
+  # `--output <id>=<path>` unconditionally; parse_known_args() tolerates it
+  # rather than erroring on an unrecognized flag.
+  return p.parse_known_args()[0]
 
 
 def main():
@@ -45,8 +46,7 @@ def main():
   out_dir.mkdir(parents=True, exist_ok=True)
 
   # 10x barcodes aren't globally unique across pools, so rewrite obs_names to
-  # "{pool_id}_{barcode}" up front -- both for concat's own sake and as the
-  # join key against the (also pool-prefixed) species assignments below.
+  # "{pool_id}_{barcode}" up front 
   print("  reading + concatenating per-pool h5ads ..")
   adatas = [sc.read_h5ad(p) for p in args.filtered_h5ad]
   for a in adatas:
