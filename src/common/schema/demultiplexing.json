@@ -1,8 +1,9 @@
 {
   "stage": "demultiplexing",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "benchmark": "omni-scrna/ambient-plan",
   "args": [
-    { "flag": "--filtered_h5ad", "type": "path", "help": "Ambient-corrected h5ad count matrix (called cells only)" }
+    { "flag": "--rawdata_h5ad", "type": "path", "help": "Raw h5ad count matrix (unfiltered, one pool per dataset)" },
+    { "flag": "--called_cells_tsv", "type": "path", "help": "TSV with called cell barcodes (cell_id)" }
   ]
 }
