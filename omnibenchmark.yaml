@@ -2,6 +2,7 @@ entrypoints:
   demultiplex_mixed_species: demultiplex_mixed_species.R
   demultiplex_hto: demultiplex_hto.R
   demultiplex_flex: demultiplex_flex.R
+  demultiplex_none: demultiplex_none.R
   concatenate: concatenate.R
 
 # Pointed to shared CLI helper code
