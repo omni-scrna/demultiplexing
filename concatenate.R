@@ -41,6 +41,25 @@ cat(sprintf("  name: %s\n", args$name))
 cat(sprintf("  filtered_h5ad (%d pools): %s\n", length(filtered_h5ad), paste(filtered_h5ad, collapse = ", ")))
 cat(sprintf("  demultiplexed_tsv (%d pools): %s\n", length(demultiplexed_tsv), paste(demultiplexed_tsv, collapse = ", ")))
 
+# One label row per GEM barcode, for cells whose ids are GEM-level. A GEM
+# called under one probe keeps that probe's labels. A GEM called under several
+# is a multiplet (as demultiplex_flex flags it) with no single sample: its
+# other label columns become NA.
+labels_per_gem <- function(labels) {
+  labels <- copy(labels)
+  labels[, cell_key := sub("_[^_]+$", "", cell_key)]
+  labels[, n_probes := .N, by = cell_key]
+  label_cols <- setdiff(colnames(labels), c("pool_id", "cell_id", "cell_key", "n_probes", "multiplet"))
+  for (col in label_cols) {
+    set(labels, which(labels$n_probes > 1), col, NA)
+  }
+  if ("multiplet" %in% colnames(labels)) labels[n_probes > 1, multiplet := TRUE]
+  labels <- unique(labels, by = "cell_key")
+  labels[, cell_id := sub("_[^_]+$", "", cell_id)]
+  labels[, n_probes := NULL]
+  labels[]
+}
+
 main <- function() {
   dir.create(args$output_dir, showWarnings = FALSE, recursive = TRUE)
 
@@ -56,6 +75,9 @@ main <- function() {
   # "{pool_id}_{barcode}" up front
   sces <- lapply(sces, function(sce) {
     if (!"pool_id" %in% colnames(colData(sce))) stop("an input h5ad is missing colData 'pool_id'")
+    # anndataR reads X with its own dimnames; left in place they go stale on
+    # the rename below and write_h5ad rejects the object.
+    for (a in assayNames(sce)) dimnames(assay(sce, a, withDimnames = FALSE)) <- NULL
     colnames(sce) <- paste0(colData(sce)$pool_id, "_", colnames(sce))
     sce
   })
@@ -68,6 +90,13 @@ main <- function() {
   labels[, cell_key := paste0(pool_id, "_", cell_id)]
 
   missing <- setdiff(colnames(combined), labels$cell_key)
+  if (length(missing) > 0) {
+    # GEM-merged Flex counts (PREP `merge: gems`): the cells lost their
+    # "_{probe_id}" suffix, the labels still carry it.
+    cat("  cells do not match the labels by id; matching by GEM barcode ..\n")
+    labels <- labels_per_gem(labels)
+    missing <- setdiff(colnames(combined), labels$cell_key)
+  }
   if (length(missing) > 0) {
     stop(sprintf("%d cell(s) in the combined matrix have no demultiplexing assignment", length(missing)))
   }
