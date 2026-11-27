@@ -56,6 +56,9 @@ main <- function() {
   # "{pool_id}_{barcode}" up front
   sces <- lapply(sces, function(sce) {
     if (!"pool_id" %in% colnames(colData(sce))) stop("an input h5ad is missing colData 'pool_id'")
+    # anndataR reads X with its own dimnames; left in place they go stale on
+    # the rename below and write_h5ad rejects the object (fix from Ben's 397aa71).
+    for (a in assayNames(sce)) dimnames(assay(sce, a, withDimnames = FALSE)) <- NULL
     colnames(sce) <- paste0(colData(sce)$pool_id, "_", colnames(sce))
     sce
   })
