@@ -37,7 +37,7 @@ assign_sample <- function(sce, pool_lookup) {
     probe_id = colData(sce)$probe_id
   ) %>%
   .[, gem_id := sub("_[^_]+$", "", cell_id)] %>%
-  merge[pool_lookup, by = c("probe_id", "pool_id"), all.x = TRUE] %>%
+  merge(pool_lookup, by = c("probe_id", "pool_id"), all.x = TRUE) %>%
   .[, multiplet := .N > 1, by = gem_id] %>%
   .[, c("probe_id", "gem_id") := NULL]
 
